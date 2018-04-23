@@ -1,0 +1,80 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description"              : "Custom Lambda backed cloud formation function to create an iam provider open id witten in .net",
+    "Resources"                : {
+        "CreateOpenIDProvider" : {
+            "Type" : "AWS::Lambda::Function",
+            "Properties" : {
+                "Description" : "Function to create the OpenID iam provider for google access",
+                "MemorySize"  : 256,
+                "Handler"     : "CustomLambdaBackedCloudFormationResource::CustomLambdaBackedCloudFormationResource.CFExtensions::CreateOpenIDProvider",
+                "Role"        : {
+                    "Fn::GetAtt" : [
+                        "IAMAccessRole",
+                        "Arn"
+                    ]
+                },
+                "Timeout"     : 30,
+                "Runtime"     : "dotnetcore1.0"
+            }
+        },
+        "IAMAccessRole"        : {
+            "Type" : "AWS::IAM::Role",
+            "Properties" : {
+                "ManagedPolicyArns" : [
+                    "arn:aws:iam::aws:policy/IAMFullAccess",
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+                    "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+                    "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+                ],
+                "AssumeRolePolicyDocument" : {
+                    "Version" : "2012-10-17",
+                    "Statement" : [
+                        {
+                            "Action" : [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect" : "Allow",
+                            "Principal" : {
+                                "Service" : [
+                                    "lambda.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "CustomCreateOpenIDProvider" : {
+            "Type" : "Custom::CreateOpenIDProvider",
+            "Properties" : {
+                "ServiceToken" : {
+                    "Fn::Join" : [
+                        "",
+                        [
+                            "arn:aws:lambda:",
+                            {
+                                "Ref" : "AWS::Region"
+                            },
+                            ":",
+                            {
+                                "Ref" : "AWS::AccountId"
+                            },
+                            ":function:",
+                            {
+                                "Ref" : "CreateOpenIDProvider"
+                            }
+                        ]
+                    ]
+                },
+                "Audiences"    : [
+                    "0000000000000-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com"
+                ],
+                "ThumbprintList" : [
+                    "0000000000000000000000000000000000000000"
+                ],
+                "ProviderURL"    : "https://samples.auth0.com"
+            }
+        }
+    }
+}
